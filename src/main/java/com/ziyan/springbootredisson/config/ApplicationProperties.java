@@ -1,7 +1,8 @@
 package com.ziyan.springbootredisson.config;
 
-import org.redisson.config.Config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+
+import java.util.Map;
 
 /**
  * @author ziyan
@@ -10,13 +11,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 public class ApplicationProperties {
-    private Config redissonConfig;
+    private Map<String,Object> redissonConfig;
 
-    public Config getRedissonConfig() {
+    public Map<String, Object> getRedissonConfig() {
         return redissonConfig;
     }
 
-    public void setRedissonConfig(Config redissonConfig) {
+    public void setRedissonConfig(Map<String, Object> redissonConfig) {
         this.redissonConfig = redissonConfig;
     }
 }
