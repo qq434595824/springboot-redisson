@@ -23,20 +23,20 @@ import java.util.stream.Collectors;
 @ConditionalOnProperty(value = "application.redissonConfig.enabled", matchIfMissing = true)
 public class RedissonConfiguration {
 
-    final static Pattern pattern = Pattern.compile("[a-zA-Z]+[0-9a-zA-Z_]*(\\.[a-zA-Z]+[0-9a-zA-Z_]*)*\\.[a-zA-Z]+[0-9a-zA-Z_]*");
+    final static Pattern CLASS_PATTERN = Pattern.compile("[a-zA-Z]+[0-9a-zA-Z_]*(\\.[a-zA-Z]+[0-9a-zA-Z_]*)*\\.[a-zA-Z]+[0-9a-zA-Z_]*");
 
     @Bean
     public RedissonClient redissonClient(ApplicationProperties applicationProperties) throws IOException {
         Map<String, Object> redissonConfig = applicationProperties.getRedissonConfig();
         final Queue<Map<String, Object>> temp = new LinkedList<>(Arrays.asList(redissonConfig));
-        // 广搜
+        // BFS
         while (!temp.isEmpty()) {
             Map<String, Object> map = temp.poll();
             map.forEach((key, value) -> {
                 if (value instanceof LinkedHashMap) {
                     List<String> keys = (List<String>) ((Map) value).keySet().stream().collect(Collectors.toList());
                     keys.sort(String::compareTo);
-                    // 校验是否数组
+                    // 校验是否数组,key以1自增长的map
                     boolean arrays = true;
                     for (int i = 0; i < keys.size(); i++) {
                         if (!StringUtils.equals(keys.get(i), String.valueOf(i))) {
@@ -51,16 +51,19 @@ public class RedissonConfiguration {
                         temp.add((LinkedHashMap) value);
                     }
                 } else if (value instanceof String) {
-                    if (pattern.matcher((String) value).matches()) {
+                    // 类名正则
+                    if (CLASS_PATTERN.matcher((String) value).matches()) {
                         try {
                             Class.forName((String) value);
                             Map<String, String> m = new HashMap<>(1);
                             m.put("class", (String) value);
                             map.replace(key, m);
                         } catch (ClassNotFoundException e) {
+                            // 无法通过反射拿到对象，不做处理
                             e.printStackTrace();
                         }
                     } else if (StringUtils.isBlank((String) value)) {
+                        // 空字符串处理
                         map.replace(key, null);
                     }
                 }
